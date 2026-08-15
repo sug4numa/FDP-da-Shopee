@@ -394,9 +394,24 @@
                     break;
                 case 'PLAYER_JOINED':
     console.log('👥 Jogador entrou');
+    console.log('📦 Data recebida:', data);
     currentRoom = data.room;
-    showRoomScreen();  // ← ADICIONE ESTA LINHA!
-    updateRoomDisplay();
+    console.log('✅ currentRoom setado:', currentRoom);
+    
+    if (!currentRoom || !currentRoom.id) {
+        console.error('❌ ERRO: currentRoom inválido!', currentRoom);
+        return;
+    }
+    
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('roomScreen').classList.add('active');
+    
+    try {
+        updateRoomDisplay();
+        console.log('✅ Tela atualizada');
+    } catch (error) {
+        console.error('❌ Erro ao atualizar tela:', error);
+    }
     break;
                 case 'NEW_PROPOSITION':
                     console.log('🎮 Nova proposta');
