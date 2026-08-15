@@ -393,10 +393,11 @@
                     showRoomScreen();
                     break;
                 case 'PLAYER_JOINED':
-                    console.log('👥 Jogador entrou');
-                    currentRoom = data.room;
-                    updateRoomDisplay();
-                    break;
+    console.log('👥 Jogador entrou');
+    currentRoom = data.room;
+    showRoomScreen();  // ← ADICIONE ESTA LINHA!
+    updateRoomDisplay();
+    break;
                 case 'NEW_PROPOSITION':
                     console.log('🎮 Nova proposta');
                     showGameScreen(data);
