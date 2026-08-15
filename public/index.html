@@ -64,7 +64,6 @@
             to { opacity: 1; }
         }
 
-        /* TELA INICIAL */
         .login-screen {
             text-align: center;
         }
@@ -133,7 +132,6 @@
             color: white;
         }
 
-        /* TELA DE SALA */
         .players-section {
             background: #f9f9f9;
             padding: 20px;
@@ -188,7 +186,6 @@
             color: white;
         }
 
-        /* TELA DE JOGO */
         .proposition-box {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -224,7 +221,6 @@
             opacity: 0.95;
         }
 
-        /* CHAT */
         .chat-section {
             background: #f9f9f9;
             padding: 20px;
@@ -265,7 +261,6 @@
             flex: 1;
         }
 
-        /* UTILITÁRIOS */
         .room-code {
             background: #f0f4ff;
             padding: 15px;
@@ -294,15 +289,6 @@
             border-radius: 8px;
             margin: 15px 0;
             border-left: 4px solid #c62828;
-        }
-
-        .success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 15px 0;
-            border-left: 4px solid #4caf50;
         }
 
         .center-text {
@@ -379,31 +365,44 @@
             
             ws = new WebSocket(WS_URL);
             
+            ws.onopen = () => {
+                console.log('✅ WebSocket conectado!');
+            };
+            
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
+                console.log('📨 Mensagem recebida:', data.type);
                 handleMessage(data);
             };
 
             ws.onerror = (error) => {
-                console.error('Erro de conexão:', error);
-                showError('Erro ao conectar ao servidor. Verifique se o servidor está rodando.');
+                console.error('❌ Erro WebSocket:', error);
+                showError('Erro ao conectar ao servidor. Verifique sua conexão.');
+            };
+
+            ws.onclose = () => {
+                console.log('🔌 WebSocket desconectado');
             };
         }
 
         function handleMessage(data) {
             switch(data.type) {
                 case 'ROOM_CREATED':
+                    console.log('🎯 Sala criada:', data.roomId);
                     currentRoom = data.room;
                     showRoomScreen();
                     break;
                 case 'PLAYER_JOINED':
+                    console.log('👥 Jogador entrou');
                     currentRoom = data.room;
                     updateRoomDisplay();
                     break;
                 case 'NEW_PROPOSITION':
+                    console.log('🎮 Nova proposta');
                     showGameScreen(data);
                     break;
                 case 'PROPOSITION_COMPLETED':
+                    console.log('✅ Proposta completada');
                     currentRoom = data.room;
                     updateGameDisplay();
                     break;
@@ -411,6 +410,7 @@
                     addChatMessage(data.playerName, data.message);
                     break;
                 case 'ERROR':
+                    console.error('🔴 Erro do servidor:', data.message);
                     showError(data.message);
                     break;
             }
@@ -420,6 +420,13 @@
             playerName = document.getElementById('playerName').value.trim();
             if (!playerName) {
                 showError('Digite seu nome!');
+                return;
+            }
+
+            console.log('📤 Enviando CREATE_ROOM');
+
+            if (ws.readyState !== WebSocket.OPEN) {
+                showError('Conexão perdida! Recarregue a página.');
                 return;
             }
 
@@ -440,6 +447,13 @@
             }
             if (!roomCode) {
                 showError('Digite o código da sala!');
+                return;
+            }
+
+            console.log('📤 Enviando JOIN_ROOM para sala:', roomCode);
+
+            if (ws.readyState !== WebSocket.OPEN) {
+                showError('Conexão perdida! Recarregue a página.');
                 return;
             }
 
@@ -502,6 +516,8 @@
                 return;
             }
 
+            console.log('🎮 Iniciando jogo');
+
             ws.send(JSON.stringify({
                 type: 'START_GAME',
                 roomId: currentRoom.id
@@ -516,7 +532,6 @@
 
         function updateGameDisplay() {
             const proposition = currentRoom.currentProposition;
-            const currentPlayerIndex = currentRoom.players.findIndex(p => p.id === playerId);
             
             const html = `
                 <div class="proposition-box">
@@ -559,6 +574,7 @@
         }
 
         function completeProposition() {
+            console.log('✅ Marcando proposta como completada');
             ws.send(JSON.stringify({
                 type: 'COMPLETE_PROPOSITION',
                 roomId: currentRoom.id,
@@ -567,6 +583,7 @@
         }
 
         function nextRound() {
+            console.log('⏭️ Próxima rodada');
             ws.send(JSON.stringify({
                 type: 'NEXT_ROUND',
                 roomId: currentRoom.id
