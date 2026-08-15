@@ -417,6 +417,31 @@
         }
 
         function showCreateRoom() {
+    playerName = document.getElementById('playerName').value.trim();
+    if (!playerName) {
+        showError('Digite seu nome!');
+        return;
+    }
+
+    console.log('Tentando criar sala...', ws.readyState);
+    
+    if (ws.readyState !== WebSocket.OPEN) {
+        showError('Conexão perdida! Recarregue a página.');
+        return;
+    }
+
+    console.log('Enviando CREATE_ROOM:', {
+        type: 'CREATE_ROOM',
+        playerId: playerId,
+        playerName: playerName
+    });
+
+    ws.send(JSON.stringify({
+        type: 'CREATE_ROOM',
+        playerId: playerId,
+        playerName: playerName
+    }));
+}
             playerName = document.getElementById('playerName').value.trim();
             if (!playerName) {
                 showError('Digite seu nome!');
