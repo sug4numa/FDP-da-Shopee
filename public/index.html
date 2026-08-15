@@ -1,1 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fogo de Proposito - Online</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* TELA INICIAL */
+        .login-screen {
+            text-align: center;
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        /* TELA DE SALA */
+        .players-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .players-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .players-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .player-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .player-card.current {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .player-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .player-score {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 8px;
+            background: #4caf50;
+            color: white;
+        }
+
+        /* TELA DE JOGO */
+        .proposition-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 30px 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .proposition-box h2 {
+            font-size: 14px;
+            font-weight: normal;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .proposition-text {
+            font-size: 32px;
+            font-weight: bold;
+            line-height: 1.4;
+            margin: 20px 0;
+        }
+
+        .player-turn {
+            font-size: 18px;
+            margin-top: 20px;
+            opacity: 0.95;
+        }
+
+        /* CHAT */
+        .chat-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            max-height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .chat-message {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .chat-message strong {
+            color: #667eea;
+        }
+
+        .chat-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-group input {
+            flex: 1;
+        }
+
+        /* UTILITÁRIOS */
+        .room-code {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .room-code p {
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 5px;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #c62828;
+        }
+
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #4caf50;
+        }
+
+        .center-text {
+            text-align: center;
+            margin: 20px 0;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .proposition-text {
+                font-size: 24px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Fogo de Proposito</h1>
+
+        <!-- TELA DE LOGIN -->
+        <div class="screen active" id="loginScreen">
+            <div class="login-screen">
+                <h2>Bem-vindo!</h2>
+                <div class="input-group">
+                    <input type="text" id="playerName" placeholder="Seu nome" />
+                </div>
+                <div class="input-group">
+                    <button class="btn-primary" onclick="showCreateRoom()">Criar Sala</button>
+                </div>
+                <div class="input-group">
+                    <h3 style="color: #666; margin: 20px 0 15px 0; font-size: 1em;">Ou</h3>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="roomCode" placeholder="Código da sala" maxlength="6" />
+                </div>
+                <div class="input-group">
+                    <button class="btn-secondary" onclick="showJoinRoom()">Entrar na Sala</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA DE SALA -->
+        <div class="screen" id="roomScreen">
+            <div id="roomContent"></div>
+        </div>
+
+        <!-- TELA DE JOGO -->
+        <div class="screen" id="gameScreen">
+            <div id="gameContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const WS_URL = `ws://${window.location.hostname}:${window.location.port || 3000}`;
+        let ws;
+        let playerId;
+        let playerName;
+        let currentRoom;
+
+        function init() {
+            playerId = 'player_' + Math.random().toString(36).substr(2, 9);
+            
+            ws = new WebSocket(WS_URL);
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('Erro de conexão:', error);
+                showError('Erro ao conectar ao servidor. Verifique se o servidor está rodando.');
+            };
+        }
+
+        function handleMessage(data) {
+            switch(data.type) {
+                case 'ROOM_CREATED':
+                    currentRoom = data.room;
+                    showRoomScreen();
+                    break;
+                case 'PLAYER_JOINED':
+                    currentRoom = data.room;
+                    updateRoomDisplay();
+                    break;
+                case 'NEW_PROPOSITION':
+                    showGameScreen(data);
+                    break;
+                case 'PROPOSITION_COMPLETED':
+                    currentRoom = data.room;
+                    updateGameDisplay();
+                    break;
+                case 'CHAT_MESSAGE':
+                    addChatMessage(data.playerName, data.message);
+                    break;
+                case 'ERROR':
+                    showError(data.message);
+                    break;
+            }
+        }
+
+        function showCreateRoom() {
+            playerName = document.getElementById('playerName').value.trim();
+            if (!playerName) {
+                showError('Digite seu nome!');
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                type: 'CREATE_ROOM',
+                playerId: playerId,
+                playerName: playerName
+            }));
+        }
+
+        function showJoinRoom() {
+            playerName = document.getElementById('playerName').value.trim();
+            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+            
+            if (!playerName) {
+                showError('Digite seu nome!');
+                return;
+            }
+            if (!roomCode) {
+                showError('Digite o código da sala!');
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                type: 'JOIN_ROOM',
+                roomId: roomCode,
+                playerId: playerId,
+                playerName: playerName
+            }));
+        }
+
+        function showRoomScreen() {
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('roomScreen').classList.add('active');
+            updateRoomDisplay();
+        }
+
+        function updateRoomDisplay() {
+            const html = `
+                <h2>Sala criada! 👥</h2>
+                <div class="room-code">
+                    <p>Compartilhe este código com seus amigos:</p>
+                    <div class="code">${currentRoom.id}</div>
+                </div>
+                
+                <div class="players-section">
+                    <h3>Jogadores (${currentRoom.players.length})</h3>
+                    <div class="players-list">
+                        ${currentRoom.players.map(p => `
+                            <div class="player-card ${p.id === playerId ? 'current' : ''}">
+                                <div class="player-name">${p.name}</div>
+                                <div class="player-score">${p.score} pts</div>
+                                ${p.id === playerId ? '<div class="status-badge">Você</div>' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="chat-section">
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-group">
+                        <input type="text" id="chatInput" placeholder="Mensagem..." />
+                        <button class="btn-primary" onclick="sendChat()">Enviar</button>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    ${currentRoom.players[0].id === playerId && !currentRoom.gameStarted ? `
+                        <button class="btn-success" onclick="startGame()">Iniciar Jogo</button>
+                    ` : ''}
+                    <button class="btn-secondary" onclick="backToLogin()">Voltar</button>
+                </div>
+            `;
+            document.getElementById('roomContent').innerHTML = html;
+        }
+
+        function startGame() {
+            if (currentRoom.players.length < 2) {
+                showError('Precisa de pelo menos 2 jogadores!');
+                return;
+            }
+
+            ws.send(JSON.stringify({
+                type: 'START_GAME',
+                roomId: currentRoom.id
+            }));
+        }
+
+        function showGameScreen(data) {
+            document.getElementById('roomScreen').classList.remove('active');
+            document.getElementById('gameScreen').classList.add('active');
+            updateGameDisplay();
+        }
+
+        function updateGameDisplay() {
+            const proposition = currentRoom.currentProposition;
+            const currentPlayerIndex = currentRoom.players.findIndex(p => p.id === playerId);
+            
+            const html = `
+                <div class="proposition-box">
+                    <h2>Proposta para ${proposition.player}</h2>
+                    <div class="proposition-text">"${proposition.text}"</div>
+                    <div class="player-turn">🎯 ${proposition.player}, é a sua vez!</div>
+                </div>
+
+                <div class="players-section">
+                    <h3>Placar</h3>
+                    <div class="players-list">
+                        ${currentRoom.players.map(p => `
+                            <div class="player-card">
+                                <div class="player-name">${p.name}</div>
+                                <div class="player-score">${p.score} pts</div>
+                                ${p.completed ? '<div class="status-badge">✓ Completou</div>' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="chat-section">
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-group">
+                        <input type="text" id="chatInput" placeholder="Mensagem..." />
+                        <button class="btn-primary" onclick="sendChat()">Enviar</button>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    ${proposition.playerId === playerId ? `
+                        <button class="btn-success" onclick="completeProposition()">Completei a Proposta! ✓</button>
+                    ` : `
+                        <button class="btn-success" onclick="completeProposition()">Votei que Completou!</button>
+                    `}
+                    <button class="btn-secondary" onclick="nextRound()">Próxima Proposta</button>
+                </div>
+            `;
+            document.getElementById('gameContent').innerHTML = html;
+        }
+
+        function completeProposition() {
+            ws.send(JSON.stringify({
+                type: 'COMPLETE_PROPOSITION',
+                roomId: currentRoom.id,
+                playerId: playerId
+            }));
+        }
+
+        function nextRound() {
+            ws.send(JSON.stringify({
+                type: 'NEXT_ROUND',
+                roomId: currentRoom.id
+            }));
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            ws.send(JSON.stringify({
+                type: 'SEND_MESSAGE',
+                roomId: currentRoom.id,
+                playerName: playerName,
+                message: message
+            }));
+
+            input.value = '';
+        }
+
+        function addChatMessage(name, message) {
+            const container = document.getElementById('chatMessages');
+            if (!container) return;
+
+            const div = document.createElement('div');
+            div.className = 'chat-message';
+            div.innerHTML = `<strong>${name}:</strong> ${message}`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function backToLogin() {
+            location.reload();
+        }
+
+        function showError(message) {
+            alert(message);
+        }
+
+        // Inicializar quando carregar
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
