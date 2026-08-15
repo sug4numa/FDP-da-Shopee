@@ -5,7 +5,10 @@ const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ 
+  server,
+  perMessageDeflate: false
+});
 
 app.use(cors());
 app.use(express.static('public'));
@@ -38,11 +41,12 @@ const propostas = [
 ];
 
 wss.on('connection', (ws) => {
-  console.log('Novo cliente conectado');
+  console.log('✅ Novo cliente conectado');
   
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
+      console.log('📨 Mensagem recebida:', data.type);
       
       switch(data.type) {
         case 'CREATE_ROOM':
@@ -65,17 +69,18 @@ wss.on('connection', (ws) => {
           break;
       }
     } catch (error) {
-      console.error('Erro processando mensagem:', error);
+      console.error('❌ Erro processando mensagem:', error);
     }
   });
   
   ws.on('close', () => {
-    console.log('Cliente desconectado');
+    console.log('🔌 Cliente desconectado');
     // Remover jogador de todas as salas
     rooms.forEach((room, roomId) => {
       room.players = room.players.filter(p => p.ws !== ws);
       if (room.players.length === 0) {
         rooms.delete(roomId);
+        console.log('🗑️ Sala deletada:', roomId);
       }
     });
   });
@@ -102,6 +107,8 @@ function createRoom(ws, data) {
   
   rooms.set(roomId, room);
   
+  console.log('🎯 Sala criada:', roomId);
+  
   ws.send(JSON.stringify({
     type: 'ROOM_CREATED',
     roomId: roomId,
@@ -113,6 +120,7 @@ function joinRoom(ws, data) {
   const room = rooms.get(data.roomId);
   
   if (!room) {
+    console.log('❌ Sala não encontrada:', data.roomId);
     ws.send(JSON.stringify({
       type: 'ERROR',
       message: 'Sala não encontrada'
@@ -129,20 +137,31 @@ function joinRoom(ws, data) {
   };
   
   room.players.push(player);
+  console.log('👥 Jogador entrou na sala', data.roomId, '- Total:', room.players.length);
   
-  // Notificar todos sobre o novo jogador
+  // IMPORTANTE: Primeiro manda para quem entrou
+  ws.send(JSON.stringify({
+    type: 'PLAYER_JOINED',
+    room: formatRoomData(room)
+  }));
+  
+  // Depois notifica todos os outros
   broadcastToRoom(data.roomId, {
     type: 'PLAYER_JOINED',
     room: formatRoomData(room)
-  });
+  }, ws); // Exclui quem entrou (já recebeu acima)
 }
 
 function startGame(data) {
   const room = rooms.get(data.roomId);
-  if (!room) return;
+  if (!room) {
+    console.log('❌ Sala não encontrada ao iniciar jogo:', data.roomId);
+    return;
+  }
   
   room.gameStarted = true;
   room.currentPlayerIndex = 0;
+  console.log('🎮 Jogo iniciado na sala:', data.roomId);
   sendNextProposition(data.roomId);
 }
 
@@ -162,6 +181,8 @@ function sendNextProposition(roomId) {
   // Reset do estado de conclusão
   room.players.forEach(p => p.completed = false);
   
+  console.log('🎯 Nova proposta enviada para:', currentPlayer.name);
+  
   broadcastToRoom(roomId, {
     type: 'NEW_PROPOSITION',
     proposition: room.currentProposition,
@@ -171,12 +192,16 @@ function sendNextProposition(roomId) {
 
 function completeProposition(data) {
   const room = rooms.get(data.roomId);
-  if (!room) return;
+  if (!room) {
+    console.log('❌ Sala não encontrada ao completar proposta:', data.roomId);
+    return;
+  }
   
   const player = room.players.find(p => p.id === data.playerId);
   if (player) {
     player.completed = true;
     player.score += 10;
+    console.log('✅ Proposta completada por:', player.name);
   }
   
   broadcastToRoom(data.roomId, {
@@ -188,9 +213,13 @@ function completeProposition(data) {
 
 function nextRound(data) {
   const room = rooms.get(data.roomId);
-  if (!room) return;
+  if (!room) {
+    console.log('❌ Sala não encontrada ao passar para próxima rodada:', data.roomId);
+    return;
+  }
   
   room.currentPlayerIndex = (room.currentPlayerIndex + 1) % room.players.length;
+  console.log('⏭️ Próxima rodada - jogador:', room.players[room.currentPlayerIndex].name);
   sendNextProposition(data.roomId);
 }
 
@@ -202,12 +231,14 @@ function sendMessage(data) {
   });
 }
 
-function broadcastToRoom(roomId, message) {
+function broadcastToRoom(roomId, message, excludeWs = null) {
   const room = rooms.get(roomId);
   if (!room) return;
   
   room.players.forEach(player => {
     if (player.ws.readyState === WebSocket.OPEN) {
+      // Se excludeWs foi fornecido, não manda para esse WebSocket
+      if (excludeWs && player.ws === excludeWs) return;
       player.ws.send(JSON.stringify(message));
     }
   });
@@ -218,6 +249,7 @@ function formatRoomData(room) {
     id: room.id,
     host: room.host,
     gameStarted: room.gameStarted,
+    currentProposition: room.currentProposition,
     players: room.players.map(p => ({
       id: p.id,
       name: p.name,
@@ -227,7 +259,7 @@ function formatRoomData(room) {
   };
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
 });
